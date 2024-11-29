@@ -16,6 +16,7 @@ class Program
     static async Task Main(string[] args)
     {
         List<(string tenantId, bool dbConsolidate)> consolidateTenantIds = new();
+        List<(string tenantId, bool dbConsolidate)> facilitateTenantIds = new();
 
         // Get consolidated tenant IDs
         consolidateTenantIds = GetTenantIds(true, "consolidate", false, consolidateTenantIds);
@@ -43,9 +44,16 @@ class Program
 
         if (consolidateTenantIds.Any(x => x.tenantId == "-1"))
         {
-            consolidateTenantIds.Clear();
-            foreach (AppTenant tenant in multitenancy.Tenants)
+            bool isDBConsolidate = false;
+            foreach (AppTenant tenant in multitenancy.Tenants){
+                if (consolidateTenantIds.Any(x => x.tenantId == "-1" && x.dbConsolidate || x.tenantId == tenant.TenantID.ToString() 
+                && x.dbConsolidate))
+                            isDBConsolidate = true;
+
                 consolidateTenantIds.Add(new ValueTuple<string, bool>(tenant.TenantID.ToString(), true));
+            }
+
+            consolidateTenantIds = facilitateTenantIds;
         }
 
         using (AppDbContext context = new AppDbContext(ConfigureDbContext(multitenancy.ShieldDBConnectionString)))
@@ -243,6 +251,7 @@ class Program
         if (string.Equals(input, "-1", StringComparison.OrdinalIgnoreCase))
         {
             consolidateTenantIds.Clear(); // Clear only current type
+            consolidateTenantIds.Add(new ValueTuple<string, bool>(input, value));
             return consolidateTenantIds;
         }
 
