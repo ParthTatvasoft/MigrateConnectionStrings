@@ -64,18 +64,21 @@ class Program
                     ? $"{tenantId} - {agency.Name}"
                     : $"No agency exists with the specified Tenant ID: {tenantId}");
             }
+        }
 
-            Console.WriteLine("Are you sure to proceed with this Tenant IDs ? Enter 'y' for yes or 'n' for no");
-            while (true)
+        Console.WriteLine("Are you sure to proceed with this Tenant IDs ? Enter 'y' for yes or 'n' for no");
+        while (true)
+        {
+            string input = Console.ReadLine();
+            if (string.Equals(input, "y", StringComparison.OrdinalIgnoreCase))
             {
-                string input = Console.ReadLine();
-                if (string.Equals(input, "y", StringComparison.OrdinalIgnoreCase))
+                Console.WriteLine("Proceeding with the execution...");
+                foreach ((string tenantId, bool dbConsolidate) in consolidateTenantIds)
                 {
-                    Console.WriteLine("Proceeding with the execution...");
-                    foreach ((string tenantId, bool dbConsolidate) in consolidateTenantIds)
+                    AppTenant tenant = multitenancy.Tenants.FirstOrDefault(x => x.TenantID == int.Parse(tenantId));
+                    if (tenant != null)
                     {
-                        AppTenant tenant = multitenancy.Tenants.FirstOrDefault(x => x.TenantID == int.Parse(tenantId));
-                        if (tenant != null)
+                        using (AppDbContext context = new AppDbContext(ConfigureDbContext(multitenancy.ShieldDBConnectionString)))
                         {
                             if (!(await context.AppConfigurations.CountAsync(x => x.AgencyId == tenant.TenantID) == 1 && dbConsolidate)
                                 && !(await context.AppConfigurations.CountAsync(x => x.AgencyId == tenant.TenantID) > 1 && !dbConsolidate))
@@ -83,18 +86,6 @@ class Program
                                 Agencies agency = await context.Agencies.FirstOrDefaultAsync(x => x.AgencyId == tenant.TenantID);
                                 if (agency != null)
                                 {
-                                    List<AgencyApps> lstAgencyApps = new();
-                                    lstAgencyApps = context.AgencyApps.Where(x => x.AgencyId == tenant.TenantID).ToList();
-
-                                    AgencyApps agencyApp = new()
-                                    {
-                                        AgencyId = tenant.TenantID,
-                                        AppId = -1,
-                                        AgencyAppId = -1,
-                                        Deleted = false
-                                    };
-                                    lstAgencyApps.Add(agencyApp);
-
                                     agency.IsDBConsolidate = dbConsolidate;
                                     agency.Wtrealm = tenant.Wtrealm ?? null;
                                     agency.MetadataAddress = tenant.MetadataAddress ?? null;
@@ -107,29 +98,42 @@ class Program
                                     context.AppConfigurations.RemoveRange(context.AppConfigurations.Where(x => x.AgencyId == tenant.TenantID).ToArray());
                                     _ = await context.SaveChangesAsync();
 
+                                    List<AgencyApps> lstAgencyApps = new();
+                                    lstAgencyApps = await context.AgencyApps.Where(x => x.AgencyId == tenant.TenantID).ToListAsync();
+
+                                    AgencyApps agencyApp = new()
+                                    {
+                                        AgencyId = tenant.TenantID,
+                                        AppId = -1,
+                                        AgencyAppId = -1,
+                                        Deleted = false
+                                    };
+                                    lstAgencyApps.Add(agencyApp);
+
                                     DataTable connectionStringTable = GenerateConnectionStringTable(lstAgencyApps, tenant, dbConsolidate, agency.Name);
                                     if (connectionStringTable.Rows.Count > 0)
                                         await ExecuteDatabaseInsertionAsync(connectionStringTable, context);
                                 }
                             }
                         }
-                        else
-                        {
-                            Console.WriteLine($"No Tenant ID - {tenantId} is found in the appsettings configuration.");
-                        }
                     }
+                    else
+                    {
+                        Console.WriteLine($"No Tenant ID - {tenantId} is found in the appsettings configuration.");
+                    }
+                }
 
-                    Console.WriteLine("\nAll configurations have been inserted into the database.");
-                    Environment.Exit(0);
-                }
-                else if (string.Equals(input, "n", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("\nExiting the application...");
-                    Environment.Exit(0); // Exits the application with code 0 (success).
-                }
-                else
-                    Console.WriteLine("Invalid input. Please type 'y' or 'n'.");
+                Console.WriteLine("\nAll configurations have been inserted into the database.");
+                Environment.Exit(0);
             }
+            else if (string.Equals(input, "n", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("\nExiting the application...");
+                Console.ReadLine();
+                Environment.Exit(0); // Exits the application with code 0 (success).
+            }
+            else
+                Console.WriteLine("Invalid input. Please type 'y' or 'n'.");
         }
     }
 
@@ -226,7 +230,7 @@ class Program
 
         Console.Write("Enter Tenant ID(s) (comma-separated or single ID): ");
         string input = Console.ReadLine()?.Trim();
-        
+
         if (string.IsNullOrWhiteSpace(input))
         {
             Console.WriteLine("Invalid input. Please enter a valid Tenant ID.");
@@ -240,7 +244,7 @@ class Program
         {
             consolidateTenantIds.Clear(); // Clear only current type
             return consolidateTenantIds;
-        }        
+        }
 
         HashSet<string> tenantIds = input
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
