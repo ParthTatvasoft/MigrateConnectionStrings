@@ -102,16 +102,14 @@ class Program
                                     agency.MobileAppTenantID = tenant.MobileAppTenantID ?? null;
 
                                     context.Agencies.Update(agency);
-                                    _ = context.SaveChangesAsync();
+                                    _ = await context.SaveChangesAsync();
 
                                     context.AppConfigurations.RemoveRange(context.AppConfigurations.Where(x => x.AgencyId == tenant.TenantID).ToArray());
-                                    _ = context.SaveChangesAsync();
+                                    _ = await context.SaveChangesAsync();
 
                                     DataTable connectionStringTable = GenerateConnectionStringTable(lstAgencyApps, tenant, dbConsolidate, agency.Name);
                                     if (connectionStringTable.Rows.Count > 0)
-                                    {
                                         await ExecuteDatabaseInsertionAsync(connectionStringTable, context);
-                                    }
                                 }
                             }
                         }
@@ -228,24 +226,21 @@ class Program
 
         Console.Write("Enter Tenant ID(s) (comma-separated or single ID): ");
         string input = Console.ReadLine()?.Trim();
-
-        if (consolidateTenantIds.Count < 0 && string.Equals(input, "none", StringComparison.OrdinalIgnoreCase))
-        {
-            Console.WriteLine("Exiting the application.");
-            Environment.Exit(0);
-        }
-
-        if (string.Equals(input, "-1", StringComparison.OrdinalIgnoreCase))
-        {
-            consolidateTenantIds.Clear(); // Clear only current type
-            return consolidateTenantIds;
-        }
-
+        
         if (string.IsNullOrWhiteSpace(input))
         {
             Console.WriteLine("Invalid input. Please enter a valid Tenant ID.");
             return consolidateTenantIds;
         }
+
+        if (input.Contains("none", StringComparison.OrdinalIgnoreCase))
+            input = string.Empty;
+
+        if (string.Equals(input, "-1", StringComparison.OrdinalIgnoreCase))
+        {
+            consolidateTenantIds.Clear(); // Clear only current type
+            return consolidateTenantIds;
+        }        
 
         HashSet<string> tenantIds = input
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
