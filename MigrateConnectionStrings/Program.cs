@@ -106,8 +106,8 @@ class Program
                                     context.AppConfigurations.RemoveRange(context.AppConfigurations.Where(x => x.AgencyId == tenant.TenantID).ToArray());
                                     _ = await context.SaveChangesAsync();
 
-                                    List<AgencyApps> lstAgencyApps = new();
-                                    lstAgencyApps = await context.AgencyApps.Where(x => x.AgencyId == tenant.TenantID).ToListAsync();
+                                    List<AgencyApps> agencyAppsList = new();
+                                    agencyAppsList = await context.AgencyApps.Where(x => x.AgencyId == tenant.TenantID).ToListAsync();
 
                                     AgencyApps agencyApp = new()
                                     {
@@ -116,9 +116,9 @@ class Program
                                         AgencyAppId = -1,
                                         Deleted = false
                                     };
-                                    lstAgencyApps.Add(agencyApp);
+                                    agencyAppsList.Add(agencyApp);
 
-                                    DataTable connectionStringTable = GenerateConnectionStringTable(lstAgencyApps, tenant, dbConsolidate, agency.Name);
+                                    DataTable connectionStringTable = GenerateConnectionStringTable(agencyAppsList, tenant, dbConsolidate, agency.Name);
                                     if (connectionStringTable.Rows.Count > 0)
                                         await ExecuteDatabaseInsertionAsync(connectionStringTable, context);
                                 }
@@ -234,7 +234,7 @@ class Program
 
         Console.WriteLine($"\nEnter Tenant IDs which we need to {type}:\n");
         Console.WriteLine("1. Type '-1' for all Tenant IDs");
-        Console.WriteLine("2. Type 'none' to exit the application\n");
+        Console.WriteLine("2. Type 'none' to ignore the execution\n");
 
         Console.Write("Enter Tenant ID(s) (comma-separated or single ID): ");
         string input = Console.ReadLine()?.Trim();
