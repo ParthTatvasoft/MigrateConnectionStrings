@@ -77,7 +77,7 @@ class Program
             }
         }
 
-        Console.WriteLine("Are you sure to proceed with this Tenant IDs ? Enter 'y' for yes or 'n' for no");
+        Console.WriteLine("Are you sure to proceed with this Tenant IDs? Enter 'y' for yes or 'n' for no");
         while (true)
         {
             string input = Console.ReadLine();
@@ -298,7 +298,6 @@ class Program
         {
             new DataColumn("AgencyAppId", typeof(int)),
             new DataColumn("DBConnectionString", typeof(string)),
-            new DataColumn("DBSchema", typeof(string)),
             new DataColumn("Username", typeof(string)),
             new DataColumn("Password", typeof(string)),
             new DataColumn("AgencyId", typeof(int)),
@@ -323,7 +322,6 @@ class Program
             table.Rows.Add(
                 app.AgencyAppId,
                 connectionString.ConnectionString ?? string.Empty,
-                "dbo",
                 connectionString.UserID ?? string.Empty,
                 connectionString.Password ?? string.Empty,
                 app.AgencyId,
@@ -346,11 +344,11 @@ class Program
             using DbCommand command = context.Database.GetDbConnection().CreateCommand();
             command.CommandType = CommandType.StoredProcedure;
             command.CommandTimeout = 230;
-            command.CommandText = "InsertEncryptedUser";
+            command.CommandText = "InsertAppConfigurations";
 
-            SqlParameter param = new("@AppConfigurations_TableType", SqlDbType.Structured)
+            SqlParameter param = new("@AppConfigurationsTypes", SqlDbType.Structured)
             {
-                TypeName = "AppConfigurations_TableType",
+                TypeName = "AppConfigurationsType",
                 Value = dataTable
             };
 
