@@ -279,6 +279,7 @@ class Program
 
         return consolidateTenantIds;
     }
+    
     private static DbContextOptions<AppDbContext> ConfigureDbContext(string connectionString)
     {
         DbContextOptionsBuilder<AppDbContext> optionsBuilder = new();

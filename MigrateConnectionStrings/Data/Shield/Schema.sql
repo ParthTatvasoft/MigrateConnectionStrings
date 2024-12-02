@@ -9,15 +9,15 @@ WITH ALGORITHM = AES_256
 ENCRYPTION BY PASSWORD = 'AnotherStrongPassword!';
 GO
 
-IF EXISTS (SELECT 1 FROM SYS.OBJECTS WHERE TYPE = 'P' AND NAME = 'InsertEncryptedUser')
+IF EXISTS (SELECT 1 FROM SYS.OBJECTS WHERE TYPE = 'P' AND NAME = 'InsertAppConfigurations')
 BEGIN
-	DROP PROCEDURE [dbo].[InsertEncryptedUser]
+	DROP PROCEDURE [dbo].[InsertAppConfigurations]
 END
 GO
 
-IF EXISTS (SELECT 1 FROM SYS.TYPES WHERE [name] = 'InsertEncryptedUser' AND is_user_defined = 1)
+IF EXISTS (SELECT 1 FROM SYS.TYPES WHERE [name] = 'AppConfigurationsType' AND is_user_defined = 1)
 BEGIN
-	DROP TYPE [dbo].[InsertEncryptedUser]
+	DROP TYPE [dbo].[AppConfigurationsType]
 END
 GO
 
@@ -32,17 +32,11 @@ CREATE TYPE [dbo].[AppConfigurationsType] AS TABLE(
 )
 GO
 
-IF EXISTS (SELECT 1 FROM SYS.OBJECTS WHERE TYPE = 'P' AND NAME = 'InsertEncryptedUser')
-BEGIN
-	DROP PROCEDURE [dbo].[InsertEncryptedUser]
-END
-GO
-
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[InsertEncryptedUser]
+CREATE PROCEDURE [dbo].[InsertAppConfigurations]
     @AppConfigurationsTypes AppConfigurationsType READONLY
 AS
 BEGIN
