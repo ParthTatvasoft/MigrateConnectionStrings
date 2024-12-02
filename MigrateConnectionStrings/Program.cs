@@ -49,8 +49,11 @@ class Program
                 if (consolidateTenantIds.Any(x => x.tenantId == "-1" && x.dbConsolidate || x.tenantId == tenant.TenantID.ToString() 
                 && x.dbConsolidate))
                             isDBConsolidate = true;
+                            else {
+                                isDBConsolidate = false;
+                            }
 
-                consolidateTenantIds.Add(new ValueTuple<string, bool>(tenant.TenantID.ToString(), true));
+                facilitateTenantIds.Add(new ValueTuple<string, bool>(tenant.TenantID.ToString(), isDBConsolidate));
             }
 
             consolidateTenantIds = facilitateTenantIds;
@@ -250,7 +253,6 @@ class Program
 
         if (string.Equals(input, "-1", StringComparison.OrdinalIgnoreCase))
         {
-            consolidateTenantIds.Clear(); // Clear only current type
             consolidateTenantIds.Add(new ValueTuple<string, bool>(input, value));
             return consolidateTenantIds;
         }
